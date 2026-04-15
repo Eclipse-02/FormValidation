@@ -38,6 +38,7 @@ export default function RegisterScreen({ navigation }) {
     const [step, setStep] = useState(0);
     const [profilePhoto, setProfilePhoto] = useState(null);
     const fadeAnim = useState(new Animated.Value(1))[0];
+    const formikRef = useRef();
 
     const emailRef = useRef();
     const phoneRef = useRef();
@@ -96,6 +97,7 @@ export default function RegisterScreen({ navigation }) {
                 contentContainerStyle={styles.container}
             >
                 <Formik
+                    innerRef={formikRef}
                     initialValues={{
                         name: '',
                         email: '',
@@ -112,6 +114,16 @@ export default function RegisterScreen({ navigation }) {
 
                         const payload = { ...values, profilePhoto };
                         await AsyncStorage.setItem('registeredUser', JSON.stringify(payload));
+
+                        emailRef.current?.clear();
+                        phoneRef.current?.clear();
+                        passwordRef.current?.clear();
+                        confirmRef.current?.clear();
+                        formikRef.current?.resetForm();
+                        setProfilePhoto(null);
+                        setStep(0);
+                        fadeAnim.setValue(1);
+
                         navigation.navigate('Login');
                     }}
                 >
@@ -156,6 +168,7 @@ export default function RegisterScreen({ navigation }) {
                                         label="Phone"
                                         ref={phoneRef}
                                         returnKeyType="done"
+                                        keyboardType="phone-pad"
                                         value={values.phone}
                                         onChangeText={handleChange('phone')}
                                         onBlur={handleBlur('phone')}
@@ -204,18 +217,25 @@ export default function RegisterScreen({ navigation }) {
                                     <Text style={styles.stepTitle}>Step 3: Review</Text>
                                     <Text>Name: {values.name}</Text>
                                     <Text>Email: {values.email}</Text>
-                                    <Text>Phone: {values.phone}</Text>
+                                    <Text style={{ marginBottom: 10 }} >Phone: {values.phone}</Text>
 
-                                    <Button style={styles.button} title="Pick Profile Photo" onPress={pickImage} />
+                                    <Button title="Pick Profile Photo" onPress={pickImage} />
                                     {profilePhoto && (
                                         <Image source={{ uri: profilePhoto }} style={styles.image} />
                                     )}
                                 </>
                             )}
 
-                            <View style={{ marginTop: 20 }}>
+                            <View style={{ marginTop: 20, gap: 10 }}>
+                                {step > 0 && (
+                                    <Button
+                                        title="Back"
+                                        onPress={() => animateStep(step - 1)}
+                                    />
+                                )}
+
                                 <Button
-                                    title={step === 2 ? 'Submit & Save' : 'Next'}
+                                    title={step === 2 ? 'Submit' : 'Next'}
                                     onPress={handleSubmit}
                                 />
                             </View>
@@ -246,8 +266,5 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         marginTop: 10,
         alignSelf: 'center',
-    },
-    button: {
-        marginTop: 10,
     },
 });
